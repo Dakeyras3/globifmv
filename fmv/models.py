@@ -2,7 +2,7 @@
 from common.models import Entity
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.utils.translation import ugettext_lazy as _, ugettext as __
+from django.utils.translation import ugettext_lazy as _
 
 
 class User(AbstractUser):
@@ -27,7 +27,7 @@ class NamedModelMixin(models.Model):
         blank=True, null=True, verbose_name=_("image"))
 
     def __str__(self):
-        return self.name or str(self.id or __("(non enregistré)"))
+        return self.name or str(self.id or _("(non enregistré)"))
 
     class Meta:
         abstract = True
@@ -61,8 +61,12 @@ class Save(Entity, NamedModelMixin):
             return False
         self.scene = scene
         self.scene.apply_action(self)
+        self.scenes.add(self.scene)
         self.save()
         return True
+
+    def __str__(self):
+        return self.name or str(self.uuid or _("(non enregistré)"))
 
     class Meta:
         verbose_name = _("sauvegarde")
@@ -86,6 +90,9 @@ class Scenario(Entity, NamedModelMixin):
     start_items = models.ManyToManyField(
         'Item', blank=True, related_name='+',
         verbose_name=_("objets de départ"))
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = _("scénario")
@@ -126,6 +133,9 @@ class Scene(Entity, NamedModelMixin):
                 else:
                     save.items.remove(action.item_id)
         save.save()
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = _("scène")
@@ -179,6 +189,8 @@ class Choice(Entity, NamedModelMixin):
     scene_to = models.ForeignKey(
         'Scene', on_delete=models.CASCADE,
         related_name='next', verbose_name=_("scène suivante"))
+    timecode = models.FloatField(
+        blank=True, null=True, verbose_name=_("timecode"))
     order = models.PositiveSmallIntegerField(
         default=0, verbose_name=_("ordre"))
     count = models.PositiveSmallIntegerField(
@@ -197,6 +209,9 @@ class Choice(Entity, NamedModelMixin):
             any(results) if self.operator == self.OPERATOR_ANY else \
             results.count(True) == 1 if self.operator == self.OPERATOR_ONE else \
             not any(results)
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = _("choix")
@@ -239,6 +254,9 @@ class Item(Entity, NamedModelMixin):
     """
     visible = models.BooleanField(
         default=True, verbose_name=_("visible"))
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = _("objet")
